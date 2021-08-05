@@ -26,6 +26,7 @@ import com.google.errorprone.annotations.DoNotCall;
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.Map;
+import javax.annotation.CheckForNull;
 
 /**
  * A {@link BiMap} whose contents will never change, with many other important properties detailed
@@ -35,9 +36,14 @@ import java.util.Map;
  * @since 2.0
  */
 @GwtCompatible(serializable = true, emulated = true)
+@ElementTypesAreNonnullByDefault
 public abstract class ImmutableBiMap<K, V> extends ImmutableMap<K, V> implements BiMap<K, V> {
 
-  /** Returns the empty bimap. */
+  /**
+   * Returns the empty bimap.
+   *
+   * <p><b>Performance note:</b> the instance returned is a singleton.
+   */
   // Casting to any type is safe because the set will never hold any elements.
   @SuppressWarnings("unchecked")
   public static <K, V> ImmutableBiMap<K, V> of() {
@@ -348,6 +354,7 @@ public abstract class ImmutableBiMap<K, V> extends ImmutableMap<K, V> implements
   @Deprecated
   @Override
   @DoNotCall("Always throws UnsupportedOperationException")
+  @CheckForNull
   public final V forcePut(K key, V value) {
     throw new UnsupportedOperationException();
   }

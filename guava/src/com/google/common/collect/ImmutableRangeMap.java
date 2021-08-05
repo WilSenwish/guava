@@ -34,6 +34,7 @@ import java.util.NoSuchElementException;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.stream.Collector;
+import javax.annotation.CheckForNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
 
 /**
@@ -63,7 +64,11 @@ public class ImmutableRangeMap<K extends Comparable<?>, V> implements RangeMap<K
     return CollectCollectors.toImmutableRangeMap(keyFunction, valueFunction);
   }
 
-  /** Returns an empty immutable range map. */
+  /**
+   * Returns an empty immutable range map.
+   *
+   * <p><b>Performance note:</b> the instance returned is a singleton.
+   */
   @SuppressWarnings("unchecked")
   public static <K extends Comparable<?>, V> ImmutableRangeMap<K, V> of() {
     return (ImmutableRangeMap<K, V>) EMPTY;
@@ -172,7 +177,8 @@ public class ImmutableRangeMap<K extends Comparable<?>, V> implements RangeMap<K
   }
 
   @Override
-  public @Nullable V get(K key) {
+  @CheckForNull
+  public V get(K key) {
     int index =
         SortedLists.binarySearch(
             ranges,
@@ -189,7 +195,8 @@ public class ImmutableRangeMap<K extends Comparable<?>, V> implements RangeMap<K
   }
 
   @Override
-  public @Nullable Entry<Range<K>, V> getEntry(K key) {
+  @CheckForNull
+  public Entry<Range<K>, V> getEntry(K key) {
     int index =
         SortedLists.binarySearch(
             ranges,

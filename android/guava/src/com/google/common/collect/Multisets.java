@@ -46,7 +46,7 @@ import org.checkerframework.checker.nullness.qual.Nullable;
  * Provides static utility methods for creating and working with {@link Multiset} instances.
  *
  * <p>See the Guava User Guide article on <a href=
- * "https://github.com/google/guava/wiki/CollectionUtilitiesExplained#multisets"> {@code
+ * "https://github.com/google/guava/wiki/CollectionUtilitiesExplained#multisets">{@code
  * Multisets}</a>.
  *
  * @author Kevin Bourrillion
@@ -141,7 +141,7 @@ public final class Multisets {
     }
 
     @Override
-    public int add(@ParametricNullness E element, int occurences) {
+    public int add(@ParametricNullness E element, int occurrences) {
       throw new UnsupportedOperationException();
     }
 

@@ -18,6 +18,7 @@ package com.google.common.collect;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.collect.NullnessCasts.uncheckedCastNullableTToT;
+import static java.lang.Math.min;
 import static java.util.Objects.requireNonNull;
 
 import com.google.common.annotations.Beta;
@@ -105,6 +106,8 @@ public final class Streams {
    * <p><b>Java 9 users:</b> use {@code optional.stream()} instead.
    */
   @Beta
+  @InlineMe(replacement = "optional.stream()")
+  @com.google.errorprone.annotations.InlineMeValidationDisabled("Java 9+ API only")
   public static <T> Stream<T> stream(java.util.Optional<T> optional) {
     return optional.isPresent() ? Stream.of(optional.get()) : Stream.empty();
   }
@@ -116,6 +119,8 @@ public final class Streams {
    * <p><b>Java 9 users:</b> use {@code optional.stream()} instead.
    */
   @Beta
+  @InlineMe(replacement = "optional.stream()")
+  @com.google.errorprone.annotations.InlineMeValidationDisabled("Java 9+ API only")
   public static IntStream stream(OptionalInt optional) {
     return optional.isPresent() ? IntStream.of(optional.getAsInt()) : IntStream.empty();
   }
@@ -127,6 +132,8 @@ public final class Streams {
    * <p><b>Java 9 users:</b> use {@code optional.stream()} instead.
    */
   @Beta
+  @InlineMe(replacement = "optional.stream()")
+  @com.google.errorprone.annotations.InlineMeValidationDisabled("Java 9+ API only")
   public static LongStream stream(OptionalLong optional) {
     return optional.isPresent() ? LongStream.of(optional.getAsLong()) : LongStream.empty();
   }
@@ -138,6 +145,8 @@ public final class Streams {
    * <p><b>Java 9 users:</b> use {@code optional.stream()} instead.
    */
   @Beta
+  @InlineMe(replacement = "optional.stream()")
+  @com.google.errorprone.annotations.InlineMeValidationDisabled("Java 9+ API only")
   public static DoubleStream stream(OptionalDouble optional) {
     return optional.isPresent() ? DoubleStream.of(optional.getAsDouble()) : DoubleStream.empty();
   }
@@ -322,7 +331,7 @@ public final class Streams {
     Iterator<B> itrB = Spliterators.iterator(splitrB);
     return StreamSupport.stream(
             new AbstractSpliterator<R>(
-                Math.min(splitrA.estimateSize(), splitrB.estimateSize()), characteristics) {
+                min(splitrA.estimateSize(), splitrB.estimateSize()), characteristics) {
               @Override
               public boolean tryAdvance(Consumer<? super R> action) {
                 if (itrA.hasNext() && itrB.hasNext()) {
@@ -401,10 +410,10 @@ public final class Streams {
    * <pre>{@code
    * mapWithIndex(
    *     Stream.of("a", "b", "c"),
-   *     (str, index) -> str + ":" + index)
+   *     (e, index) -> index + ":" + e)
    * }</pre>
    *
-   * <p>would return {@code Stream.of("a:0", "b:1", "c:2")}.
+   * <p>would return {@code Stream.of("0:a", "1:b", "2:c")}.
    *
    * <p>The resulting stream is <a
    * href="http://gee.cs.oswego.edu/dl/html/StreamParallelGuidance.html">efficiently splittable</a>
@@ -416,7 +425,6 @@ public final class Streams {
    * <p>The order of the resulting stream is defined if and only if the order of the original stream
    * was defined.
    */
-  @Beta
   public static <T extends @Nullable Object, R extends @Nullable Object> Stream<R> mapWithIndex(
       Stream<T> stream, FunctionWithIndex<? super T, ? extends R> function) {
     checkNotNull(stream);
@@ -484,11 +492,11 @@ public final class Streams {
    *
    * <pre>{@code
    * mapWithIndex(
-   *     IntStream.of(0, 1, 2),
-   *     (i, index) -> i + ":" + index)
+   *     IntStream.of(10, 11, 12),
+   *     (e, index) -> index + ":" + e)
    * }</pre>
    *
-   * <p>...would return {@code Stream.of("0:0", "1:1", "2:2")}.
+   * <p>...would return {@code Stream.of("0:10", "1:11", "2:12")}.
    *
    * <p>The resulting stream is <a
    * href="http://gee.cs.oswego.edu/dl/html/StreamParallelGuidance.html">efficiently splittable</a>
@@ -500,7 +508,6 @@ public final class Streams {
    * <p>The order of the resulting stream is defined if and only if the order of the original stream
    * was defined.
    */
-  @Beta
   public static <R extends @Nullable Object> Stream<R> mapWithIndex(
       IntStream stream, IntFunctionWithIndex<R> function) {
     checkNotNull(stream);
@@ -564,11 +571,11 @@ public final class Streams {
    *
    * <pre>{@code
    * mapWithIndex(
-   *     LongStream.of(0, 1, 2),
-   *     (i, index) -> i + ":" + index)
+   *     LongStream.of(10, 11, 12),
+   *     (e, index) -> index + ":" + e)
    * }</pre>
    *
-   * <p>...would return {@code Stream.of("0:0", "1:1", "2:2")}.
+   * <p>...would return {@code Stream.of("0:10", "1:11", "2:12")}.
    *
    * <p>The resulting stream is <a
    * href="http://gee.cs.oswego.edu/dl/html/StreamParallelGuidance.html">efficiently splittable</a>
@@ -580,7 +587,6 @@ public final class Streams {
    * <p>The order of the resulting stream is defined if and only if the order of the original stream
    * was defined.
    */
-  @Beta
   public static <R extends @Nullable Object> Stream<R> mapWithIndex(
       LongStream stream, LongFunctionWithIndex<R> function) {
     checkNotNull(stream);
@@ -644,11 +650,11 @@ public final class Streams {
    *
    * <pre>{@code
    * mapWithIndex(
-   *     DoubleStream.of(0, 1, 2),
-   *     (x, index) -> x + ":" + index)
+   *     DoubleStream.of(0.0, 1.0, 2.0)
+   *     (e, index) -> index + ":" + e)
    * }</pre>
    *
-   * <p>...would return {@code Stream.of("0.0:0", "1.0:1", "2.0:2")}.
+   * <p>...would return {@code Stream.of("0:0.0", "1:1.0", "2:2.0")}.
    *
    * <p>The resulting stream is <a
    * href="http://gee.cs.oswego.edu/dl/html/StreamParallelGuidance.html">efficiently splittable</a>
@@ -660,7 +666,6 @@ public final class Streams {
    * <p>The order of the resulting stream is defined if and only if the order of the original stream
    * was defined.
    */
-  @Beta
   public static <R extends @Nullable Object> Stream<R> mapWithIndex(
       DoubleStream stream, DoubleFunctionWithIndex<R> function) {
     checkNotNull(stream);
@@ -726,7 +731,6 @@ public final class Streams {
    *
    * @since 21.0
    */
-  @Beta
   public interface FunctionWithIndex<T extends @Nullable Object, R extends @Nullable Object> {
     /** Applies this function to the given argument and its index within a stream. */
     @ParametricNullness
@@ -782,7 +786,6 @@ public final class Streams {
    *
    * @since 21.0
    */
-  @Beta
   public interface IntFunctionWithIndex<R extends @Nullable Object> {
     /** Applies this function to the given argument and its index within a stream. */
     @ParametricNullness
@@ -797,7 +800,6 @@ public final class Streams {
    *
    * @since 21.0
    */
-  @Beta
   public interface LongFunctionWithIndex<R extends @Nullable Object> {
     /** Applies this function to the given argument and its index within a stream. */
     @ParametricNullness
@@ -812,7 +814,6 @@ public final class Streams {
    *
    * @since 21.0
    */
-  @Beta
   public interface DoubleFunctionWithIndex<R extends @Nullable Object> {
     /** Applies this function to the given argument and its index within a stream. */
     @ParametricNullness
@@ -844,7 +845,6 @@ public final class Streams {
    * split has a last element of null, so throw NPE" from "the final split was empty, so look for an
    * element in the prior one.")
    */
-  @Beta
   public static <T> java.util.Optional<T> findLast(Stream<T> stream) {
     class OptionalState {
       boolean set = false;
@@ -923,7 +923,6 @@ public final class Streams {
    * @see IntStream#findFirst()
    * @throws NullPointerException if the last element of the stream is null
    */
-  @Beta
   public static OptionalInt findLast(IntStream stream) {
     // findLast(Stream) does some allocation, so we might as well box some more
     java.util.Optional<Integer> boxedLast = findLast(stream.boxed());
@@ -942,7 +941,6 @@ public final class Streams {
    * @see LongStream#findFirst()
    * @throws NullPointerException if the last element of the stream is null
    */
-  @Beta
   public static OptionalLong findLast(LongStream stream) {
     // findLast(Stream) does some allocation, so we might as well box some more
     java.util.Optional<Long> boxedLast = findLast(stream.boxed());
@@ -961,7 +959,6 @@ public final class Streams {
    * @see DoubleStream#findFirst()
    * @throws NullPointerException if the last element of the stream is null
    */
-  @Beta
   public static OptionalDouble findLast(DoubleStream stream) {
     // findLast(Stream) does some allocation, so we might as well box some more
     java.util.Optional<Double> boxedLast = findLast(stream.boxed());

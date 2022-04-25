@@ -28,6 +28,7 @@ import com.google.common.base.Predicates;
 import com.google.common.collect.Collections2.FilteredCollection;
 import com.google.common.math.IntMath;
 import com.google.errorprone.annotations.CanIgnoreReturnValue;
+import com.google.errorprone.annotations.DoNotCall;
 import java.io.Serializable;
 import java.util.AbstractSet;
 import java.util.Arrays;
@@ -56,7 +57,7 @@ import org.checkerframework.checker.nullness.qual.Nullable;
  * {@link Lists}, {@link Maps} and {@link Queues}.
  *
  * <p>See the Guava User Guide article on <a href=
- * "https://github.com/google/guava/wiki/CollectionUtilitiesExplained#sets"> {@code Sets}</a>.
+ * "https://github.com/google/guava/wiki/CollectionUtilitiesExplained#sets">{@code Sets}</a>.
  *
  * @author Kevin Bourrillion
  * @author Jared Levy
@@ -158,9 +159,9 @@ public final class Sets {
    * using a {@code LinkedHashSet} instead, at the cost of increased memory footprint, to get
    * deterministic iteration behavior.
    *
-   * <p><b>Note for Java 7 and later:</b> this method is now unnecessary and should be treated as
-   * deprecated. Instead, use the {@code HashSet} constructor directly, taking advantage of the new
-   * <a href="http://goo.gl/iz2Wi">"diamond" syntax</a>.
+   * <p><b>Note:</b> this method is now unnecessary and should be treated as deprecated. Instead,
+   * use the {@code HashSet} constructor directly, taking advantage of <a
+   * href="http://goo.gl/iz2Wi">"diamond" syntax</a>.
    */
   public static <E extends @Nullable Object> HashSet<E> newHashSet() {
     return new HashSet<E>();
@@ -197,9 +198,9 @@ public final class Sets {
    * <p><b>Note:</b> if {@code E} is an {@link Enum} type, use {@link #newEnumSet(Iterable, Class)}
    * instead.
    *
-   * <p><b>Note for Java 7 and later:</b> if {@code elements} is a {@link Collection}, you don't
-   * need this method. Instead, use the {@code HashSet} constructor directly, taking advantage of
-   * the new <a href="http://goo.gl/iz2Wi">"diamond" syntax</a>.
+   * <p><b>Note:</b> if {@code elements} is a {@link Collection}, you don't need this method.
+   * Instead, use the {@code HashSet} constructor directly, taking advantage of <a
+   * href="http://goo.gl/iz2Wi">"diamond" syntax</a>.
    *
    * <p>Overall, this method is not very useful and will likely be deprecated in the future.
    */
@@ -284,9 +285,9 @@ public final class Sets {
    *
    * <p><b>Note:</b> if mutability is not required, use {@link ImmutableSet#of()} instead.
    *
-   * <p><b>Note for Java 7 and later:</b> this method is now unnecessary and should be treated as
-   * deprecated. Instead, use the {@code LinkedHashSet} constructor directly, taking advantage of
-   * the new <a href="http://goo.gl/iz2Wi">"diamond" syntax</a>.
+   * <p><b>Note:</b> this method is now unnecessary and should be treated as deprecated. Instead,
+   * use the {@code LinkedHashSet} constructor directly, taking advantage of <a
+   * href="http://goo.gl/iz2Wi">"diamond" syntax</a>.
    *
    * @return a new, empty {@code LinkedHashSet}
    */
@@ -300,9 +301,9 @@ public final class Sets {
    * <p><b>Note:</b> if mutability is not required and the elements are non-null, use {@link
    * ImmutableSet#copyOf(Iterable)} instead.
    *
-   * <p><b>Note for Java 7 and later:</b> if {@code elements} is a {@link Collection}, you don't
-   * need this method. Instead, use the {@code LinkedHashSet} constructor directly, taking advantage
-   * of the new <a href="http://goo.gl/iz2Wi">"diamond" syntax</a>.
+   * <p><b>Note:</b> if {@code elements} is a {@link Collection}, you don't need this method.
+   * Instead, use the {@code LinkedHashSet} constructor directly, taking advantage of <a
+   * href="http://goo.gl/iz2Wi">"diamond" syntax</a>.
    *
    * <p>Overall, this method is not very useful and will likely be deprecated in the future.
    *
@@ -344,9 +345,9 @@ public final class Sets {
    *
    * <p><b>Note:</b> if mutability is not required, use {@link ImmutableSortedSet#of()} instead.
    *
-   * <p><b>Note for Java 7 and later:</b> this method is now unnecessary and should be treated as
-   * deprecated. Instead, use the {@code TreeSet} constructor directly, taking advantage of the new
-   * <a href="http://goo.gl/iz2Wi">"diamond" syntax</a>.
+   * <p><b>Note:</b> this method is now unnecessary and should be treated as deprecated. Instead,
+   * use the {@code TreeSet} constructor directly, taking advantage of <a
+   * href="http://goo.gl/iz2Wi">"diamond" syntax</a>.
    *
    * @return a new, empty {@code TreeSet}
    */
@@ -365,9 +366,9 @@ public final class Sets {
    * method has different behavior than {@link TreeSet#TreeSet(SortedSet)}, which returns a {@code
    * TreeSet} with that comparator.
    *
-   * <p><b>Note for Java 7 and later:</b> this method is now unnecessary and should be treated as
-   * deprecated. Instead, use the {@code TreeSet} constructor directly, taking advantage of the new
-   * <a href="http://goo.gl/iz2Wi">"diamond" syntax</a>.
+   * <p><b>Note:</b> this method is now unnecessary and should be treated as deprecated. Instead,
+   * use the {@code TreeSet} constructor directly, taking advantage of <a
+   * href="http://goo.gl/iz2Wi">"diamond" syntax</a>.
    *
    * <p>This method is just a small convenience for creating an empty set and then calling {@link
    * Iterables#addAll}. This method is not very useful and will likely be deprecated in the future.
@@ -387,11 +388,11 @@ public final class Sets {
    * <p><b>Note:</b> if mutability is not required, use {@code
    * ImmutableSortedSet.orderedBy(comparator).build()} instead.
    *
-   * <p><b>Note for Java 7 and later:</b> this method is now unnecessary and should be treated as
-   * deprecated. Instead, use the {@code TreeSet} constructor directly, taking advantage of the new
-   * <a href="http://goo.gl/iz2Wi">"diamond" syntax</a>. One caveat to this is that the {@code
-   * TreeSet} constructor uses a null {@code Comparator} to mean "natural ordering," whereas this
-   * factory rejects null. Clean your code accordingly.
+   * <p><b>Note:</b> this method is now unnecessary and should be treated as deprecated. Instead,
+   * use the {@code TreeSet} constructor directly, taking advantage of <a
+   * href="http://goo.gl/iz2Wi">"diamond" syntax</a>. One caveat to this is that the {@code TreeSet}
+   * constructor uses a null {@code Comparator} to mean "natural ordering," whereas this factory
+   * rejects null. Clean your code accordingly.
    *
    * @param comparator the comparator to use to sort the set
    * @return a new, empty {@code TreeSet}
@@ -580,6 +581,7 @@ public final class Sets {
     @CanIgnoreReturnValue
     @Deprecated
     @Override
+    @DoNotCall("Always throws UnsupportedOperationException")
     public final boolean add(@ParametricNullness E e) {
       throw new UnsupportedOperationException();
     }
@@ -593,6 +595,7 @@ public final class Sets {
     @CanIgnoreReturnValue
     @Deprecated
     @Override
+    @DoNotCall("Always throws UnsupportedOperationException")
     public final boolean remove(@CheckForNull Object object) {
       throw new UnsupportedOperationException();
     }
@@ -606,6 +609,7 @@ public final class Sets {
     @CanIgnoreReturnValue
     @Deprecated
     @Override
+    @DoNotCall("Always throws UnsupportedOperationException")
     public final boolean addAll(Collection<? extends E> newElements) {
       throw new UnsupportedOperationException();
     }
@@ -619,6 +623,7 @@ public final class Sets {
     @CanIgnoreReturnValue
     @Deprecated
     @Override
+    @DoNotCall("Always throws UnsupportedOperationException")
     public final boolean removeAll(Collection<?> oldElements) {
       throw new UnsupportedOperationException();
     }
@@ -632,6 +637,7 @@ public final class Sets {
     @CanIgnoreReturnValue
     @Deprecated
     @Override
+    @DoNotCall("Always throws UnsupportedOperationException")
     public final boolean retainAll(Collection<?> elementsToKeep) {
       throw new UnsupportedOperationException();
     }
@@ -644,6 +650,7 @@ public final class Sets {
      */
     @Deprecated
     @Override
+    @DoNotCall("Always throws UnsupportedOperationException")
     public final void clear() {
       throw new UnsupportedOperationException();
     }

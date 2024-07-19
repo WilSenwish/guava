@@ -317,6 +317,13 @@ public final class HttpHeaders {
    */
   public static final String KEEP_ALIVE = "Keep-Alive";
   /**
+   * The HTTP <a href="https://github.com/WICG/nav-speculation/blob/main/no-vary-search.md">{@code
+   * No-Vary-Seearch}</a> header field name.
+   *
+   * @since 32.0.0
+   */
+  public static final String NO_VARY_SEARCH = "No-Vary-Search";
+  /**
    * The HTTP <a href="https://googlechrome.github.io/OriginTrials/#header">{@code Origin-Trial}</a>
    * header field name.
    *
@@ -364,6 +371,16 @@ public final class HttpHeaders {
    * @since 27.1
    */
   public static final String SOURCE_MAP = "SourceMap";
+
+  /**
+   * The HTTP <a href="https://github.com/WICG/nav-speculation/blob/main/opt-in.md">{@code
+   * Supports-Loading-Mode}</a> header field name. This can be used to specify, for example, <a
+   * href="https://developer.chrome.com/docs/privacy-sandbox/fenced-frame/#server-opt-in">fenced
+   * frames</a>.
+   *
+   * @since 32.0.0
+   */
+  public static final String SUPPORTS_LOADING_MODE = "Supports-Loading-Mode";
 
   /**
    * The HTTP <a href="http://tools.ietf.org/html/rfc6797#section-6.1">{@code
@@ -606,6 +623,15 @@ public final class HttpHeaders {
 
   /**
    * The HTTP <a
+   * href="https://w3c.github.io/webappsec-permissions-policy/#permissions-policy-report-only-http-header-field">{@code
+   * Permissions-Policy-Report-Only}</a> header field name.
+   *
+   * @since 33.2.0
+   */
+  public static final String PERMISSIONS_POLICY_REPORT_ONLY = "Permissions-Policy-Report-Only";
+
+  /**
+   * The HTTP <a
    * href="https://wicg.github.io/user-preference-media-features-headers/#sec-ch-prefers-color-scheme">{@code
    * Sec-CH-Prefers-Color-Scheme}</a> header field name.
    *
@@ -690,18 +716,43 @@ public final class HttpHeaders {
    */
   public static final String SEC_CH_UA_MOBILE = "Sec-CH-UA-Mobile";
   /**
+   * The HTTP <a href="https://wicg.github.io/ua-client-hints/#sec-ch-ua-wow64">{@code
+   * Sec-CH-UA-WoW64}</a> header field name.
+   *
+   * @since 32.0.0
+   */
+  public static final String SEC_CH_UA_WOW64 = "Sec-CH-UA-WoW64";
+  /**
    * The HTTP <a href="https://wicg.github.io/ua-client-hints/#sec-ch-ua-bitness">{@code
    * Sec-CH-UA-Bitness}</a> header field name.
    *
    * @since 31.0
    */
   public static final String SEC_CH_UA_BITNESS = "Sec-CH-UA-Bitness";
+
+  /**
+   * The HTTP <a href="https://wicg.github.io/ua-client-hints/#sec-ch-ua-form-factor">{@code
+   * Sec-CH-UA-Form-Factor}</a> header field name.
+   *
+   * @deprecated Prefer {@link SEC_CH_UA_FORM_FACTORS}.
+   * @since 32.0.0
+   */
+  @Deprecated public static final String SEC_CH_UA_FORM_FACTOR = "Sec-CH-UA-Form-Factor";
+
+  /**
+   * The HTTP <a href="https://wicg.github.io/ua-client-hints/#sec-ch-ua-form-factors">{@code
+   * Sec-CH-UA-Form-Factors}</a> header field name.
+   *
+   * @since NEXT
+   */
+  public static final String SEC_CH_UA_FORM_FACTORS = "Sec-CH-UA-Form-Factors";
+
   /**
    * The HTTP <a
    * href="https://wicg.github.io/responsive-image-client-hints/#sec-ch-viewport-width">{@code
    * Sec-CH-Viewport-Width}</a> header field name.
    *
-   * @since NEXT
+   * @since 32.0.0
    */
   public static final String SEC_CH_VIEWPORT_WIDTH = "Sec-CH-Viewport-Width";
   /**
@@ -709,14 +760,14 @@ public final class HttpHeaders {
    * href="https://wicg.github.io/responsive-image-client-hints/#sec-ch-viewport-height">{@code
    * Sec-CH-Viewport-Height}</a> header field name.
    *
-   * @since NEXT
+   * @since 32.0.0
    */
   public static final String SEC_CH_VIEWPORT_HEIGHT = "Sec-CH-Viewport-Height";
   /**
    * The HTTP <a href="https://wicg.github.io/responsive-image-client-hints/#sec-ch-dpr">{@code
    * Sec-CH-DPR}</a> header field name.
    *
-   * @since NEXT
+   * @since 32.0.0
    */
   public static final String SEC_CH_DPR = "Sec-CH-DPR";
   /**
@@ -810,6 +861,56 @@ public final class HttpHeaders {
    * @since 28.0
    */
   public static final String SEC_WEBSOCKET_VERSION = "Sec-WebSocket-Version";
+  /**
+   * The HTTP <a href="https://patcg-individual-drafts.github.io/topics/">{@code
+   * Sec-Browsing-Topics}</a> header field name.
+   *
+   * @since 32.0.0
+   */
+  public static final String SEC_BROWSING_TOPICS = "Sec-Browsing-Topics";
+  /**
+   * The HTTP <a href="https://patcg-individual-drafts.github.io/topics/">{@code
+   * Observe-Browsing-Topics}</a> header field name.
+   *
+   * @since 32.0.0
+   */
+  public static final String OBSERVE_BROWSING_TOPICS = "Observe-Browsing-Topics";
+
+  /**
+   * The HTTP <a
+   * href="https://wicg.github.io/turtledove/#handling-direct-from-seller-signals">{@code
+   * Sec-Ad-Auction-Fetch}</a> header field name.
+   *
+   * @since 33.0.0
+   */
+  public static final String SEC_AD_AUCTION_FETCH = "Sec-Ad-Auction-Fetch";
+
+  /**
+   * The HTTP <a
+   * href="https://privacycg.github.io/gpc-spec/#the-sec-gpc-header-field-for-http-requests">{@code
+   * Sec-GPC}</a> header field name.
+   *
+   * @since 33.2.0
+   */
+  public static final String SEC_GPC = "Sec-GPC";
+
+  /**
+   * The HTTP <a
+   * href="https://wicg.github.io/turtledove/#handling-direct-from-seller-signals">{@code
+   * Ad-Auction-Signals}</a> header field name.
+   *
+   * @since 33.0.0
+   */
+  public static final String AD_AUCTION_SIGNALS = "Ad-Auction-Signals";
+
+  /**
+   * The HTTP <a href="https://wicg.github.io/turtledove/#http-headerdef-ad-auction-allowed">{@code
+   * Ad-Auction-Allowed}</a> header field name.
+   *
+   * @since 33.2.0
+   */
+  public static final String AD_AUCTION_ALLOWED = "Ad-Auction-Allowed";
+
   /**
    * The HTTP <a href="https://tools.ietf.org/html/rfc8586">{@code CDN-Loop}</a> header field name.
    *

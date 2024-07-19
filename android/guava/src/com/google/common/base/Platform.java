@@ -17,9 +17,6 @@ package com.google.common.base;
 import com.google.common.annotations.GwtCompatible;
 import java.lang.ref.WeakReference;
 import java.util.Locale;
-import java.util.ServiceConfigurationError;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import java.util.regex.Pattern;
 import javax.annotation.CheckForNull;
 
@@ -31,16 +28,9 @@ import javax.annotation.CheckForNull;
 @GwtCompatible(emulated = true)
 @ElementTypesAreNonnullByDefault
 final class Platform {
-  private static final Logger logger = Logger.getLogger(Platform.class.getName());
   private static final PatternCompiler patternCompiler = loadPatternCompiler();
 
   private Platform() {}
-
-  /** Calls {@link System#nanoTime()}. */
-  @SuppressWarnings("GoodTime") // reading system time without TimeSource
-  static long systemNanoTime() {
-    return System.nanoTime();
-  }
 
   static CharMatcher precomputeCharMatcher(CharMatcher matcher) {
     return matcher.precomputedInternal();
@@ -48,7 +38,17 @@ final class Platform {
 
   static <T extends Enum<T>> Optional<T> getEnumIfPresent(Class<T> enumClass, String value) {
     WeakReference<? extends Enum<?>> ref = Enums.getEnumConstants(enumClass).get(value);
-    return ref == null ? Optional.<T>absent() : Optional.of(enumClass.cast(ref.get()));
+    /*
+     * We use `fromNullable` instead of `of` because `WeakReference.get()` has a nullable return
+     * type.
+     *
+     * In practice, we are very unlikely to see `null`: The `WeakReference` to the enum constant
+     * won't be cleared as long as the enum constant is referenced somewhere, and the enum constant
+     * is referenced somewhere for as long as the enum class is loaded. *Maybe in theory* the enum
+     * class could be unloaded after the above call to `getEnumConstants` but before we call
+     * `get()`, but that is vanishingly unlikely.
+     */
+    return ref == null ? Optional.absent() : Optional.fromNullable(enumClass.cast(ref.get()));
   }
 
   static String formatCompact4Digits(double value) {
@@ -98,10 +98,6 @@ final class Platform {
     return new JdkPatternCompiler();
   }
 
-  private static void logPatternCompilerError(ServiceConfigurationError e) {
-    logger.log(Level.WARNING, "Error loading regex compiler, falling back to next option", e);
-  }
-
   private static final class JdkPatternCompiler implements PatternCompiler {
     @Override
     public CommonPattern compile(String pattern) {
@@ -113,6 +109,4 @@ final class Platform {
       return true;
     }
   }
-
-  static void checkGwtRpcEnabled() {}
 }

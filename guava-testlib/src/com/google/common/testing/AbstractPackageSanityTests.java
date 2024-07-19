@@ -20,8 +20,8 @@ import static com.google.common.base.Predicates.and;
 import static com.google.common.base.Predicates.not;
 import static com.google.common.testing.AbstractPackageSanityTests.Chopper.suffix;
 
-import com.google.common.annotations.Beta;
 import com.google.common.annotations.GwtIncompatible;
+import com.google.common.annotations.J2ktIncompatible;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Optional;
 import com.google.common.base.Predicate;
@@ -43,7 +43,6 @@ import java.util.Locale;
 import java.util.TreeMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import junit.framework.AssertionFailedError;
 import junit.framework.TestCase;
 import org.junit.Test;
 
@@ -101,11 +100,12 @@ import org.junit.Test;
  * @author Ben Yu
  * @since 14.0
  */
-@Beta
 // TODO: Switch to JUnit 4 and use @Parameterized and @BeforeClass
 // Note: @Test annotations are deliberate, as some subclasses specify @RunWith(JUnit4).
 @GwtIncompatible
+@J2ktIncompatible
 @J2ObjCIncompatible // com.google.common.reflect.ClassPath
+@ElementTypesAreNonnullByDefault
 public abstract class AbstractPackageSanityTests extends TestCase {
 
   /**
@@ -307,7 +307,7 @@ public abstract class AbstractPackageSanityTests extends TestCase {
     this.classFilter = and(this.classFilter, not(condition));
   }
 
-  private static AssertionFailedError sanityError(
+  private static AssertionError sanityError(
       Class<?> cls, List<String> explicitTestNames, String description, Throwable e) {
     String message =
         String.format(
@@ -318,14 +318,12 @@ public abstract class AbstractPackageSanityTests extends TestCase {
             cls,
             explicitTestNames.get(0),
             cls.getName());
-    AssertionFailedError error = new AssertionFailedError(message);
-    error.initCause(e);
-    return error;
+    return new AssertionError(message, e);
   }
 
   /**
    * Finds the classes not ending with a test suffix and not covered by an explicit test whose name
-   * is {@code explicitTestName}.
+   * is {@code explicitTestNames}.
    */
   @VisibleForTesting
   List<Class<?>> findClassesToTest(

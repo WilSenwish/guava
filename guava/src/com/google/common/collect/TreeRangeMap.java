@@ -23,7 +23,6 @@ import static com.google.common.base.Predicates.in;
 import static com.google.common.base.Predicates.not;
 import static java.util.Objects.requireNonNull;
 
-import com.google.common.annotations.Beta;
 import com.google.common.annotations.GwtIncompatible;
 import com.google.common.base.MoreObjects;
 import com.google.common.base.Predicate;
@@ -51,7 +50,7 @@ import org.checkerframework.checker.nullness.qual.Nullable;
  * @author Louis Wasserman
  * @since 14.0
  */
-@Beta
+@SuppressWarnings("rawtypes") // https://github.com/google/guava/issues/989
 @GwtIncompatible // NavigableMap
 @ElementTypesAreNonnullByDefault
 public final class TreeRangeMap<K extends Comparable, V> implements RangeMap<K, V> {
@@ -265,6 +264,9 @@ public final class TreeRangeMap<K extends Comparable, V> implements RangeMap<K, 
     putRangeMapEntry(cut, rangeMapEntry.getUpperBound(), rangeMapEntry.getValue());
   }
 
+  /**
+   * @since 28.1
+   */
   @Override
   public void merge(
       Range<K> range,
@@ -433,6 +435,8 @@ public final class TreeRangeMap<K extends Comparable, V> implements RangeMap<K, 
         }
 
         @Override
+        // https://github.com/jspecify/jspecify-reference-checker/issues/162
+        @SuppressWarnings("nullness")
         public void merge(
             Range<Comparable<?>> range,
             @CheckForNull Object value,

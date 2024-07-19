@@ -16,6 +16,7 @@
 
 package com.google.common.hash;
 
+import static com.google.common.truth.Truth.assertThat;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 
@@ -353,7 +354,7 @@ final class HashTestUtils {
       // measure probability and assert it's within margin of error
       for (int j = 0; j < hashBits; j++) {
         double prob = (double) diff[j] / (double) (diff[j] + same[j]);
-        Assert.assertEquals(0.50d, prob, epsilon);
+        assertThat(prob).isWithin(epsilon).of(0.50d);
       }
     }
   }
@@ -376,7 +377,7 @@ final class HashTestUtils {
       for (int j = 0; j < keyBits; j++) {
         if (j <= i) continue;
         int count = 0;
-        int maxCount = 20; // the probability of error here is miniscule
+        int maxCount = 20; // the probability of error here is minuscule
         boolean diff = false;
 
         while (!diff) {
@@ -450,7 +451,7 @@ final class HashTestUtils {
         // measure probability and assert it's within margin of error
         for (int j = 0; j < hashBits; j++) {
           double prob = (double) diff[j] / (double) (diff[j] + same[j]);
-          Assert.assertEquals(0.50d, prob, epsilon);
+          assertThat(prob).isWithin(epsilon).of(0.50d);
         }
       }
     }

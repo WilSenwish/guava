@@ -57,7 +57,8 @@ public final class Hashing {
    * <p>Repeated calls to this method on the same loaded {@code Hashing} class, using the same value
    * for {@code minimumBits}, will return identically-behaving {@link HashFunction} instances.
    *
-   * @param minimumBits a positive integer (can be arbitrarily large)
+   * @param minimumBits a positive integer. This can be arbitrarily large. The returned {@link
+   *     HashFunction} instance may use memory proportional to this integer.
    * @return a hash function, described above, that produces hash codes of length {@code
    *     minimumBits} or greater
    */
@@ -280,6 +281,10 @@ public final class Hashing {
    * Returns a hash function implementing the Message Authentication Code (MAC) algorithm, using the
    * MD5 (128 hash bits) hash function and the given secret key.
    *
+   * <p>If you are designing a new system that needs HMAC, prefer {@link #hmacSha256} or other
+   * future-proof algorithms <a
+   * href="https://datatracker.ietf.org/doc/html/rfc6151#section-2.3">over {@code hmacMd5}</a>.
+   *
    * @param key the secret key
    * @throws IllegalArgumentException if the given key is inappropriate for initializing this MAC
    * @since 20.0
@@ -292,6 +297,10 @@ public final class Hashing {
    * Returns a hash function implementing the Message Authentication Code (MAC) algorithm, using the
    * MD5 (128 hash bits) hash function and a {@link SecretKeySpec} created from the given byte array
    * and the MD5 algorithm.
+   *
+   * <p>If you are designing a new system that needs HMAC, prefer {@link #hmacSha256} or other
+   * future-proof algorithms <a
+   * href="https://datatracker.ietf.org/doc/html/rfc6151#section-2.3">over {@code hmacMd5}</a>.
    *
    * @param key the key material of the secret key
    * @since 20.0

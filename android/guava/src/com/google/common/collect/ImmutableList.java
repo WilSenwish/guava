@@ -25,8 +25,9 @@ import static com.google.common.collect.CollectPreconditions.checkNonnegative;
 import static com.google.common.collect.ObjectArrays.checkElementsNotNull;
 import static com.google.common.collect.RegularImmutableList.EMPTY;
 
-import com.google.common.annotations.Beta;
 import com.google.common.annotations.GwtCompatible;
+import com.google.common.annotations.GwtIncompatible;
+import com.google.common.annotations.J2ktIncompatible;
 import com.google.errorprone.annotations.CanIgnoreReturnValue;
 import com.google.errorprone.annotations.DoNotCall;
 import com.google.errorprone.annotations.InlineMe;
@@ -40,6 +41,7 @@ import java.util.Comparator;
 import java.util.Iterator;
 import java.util.List;
 import java.util.RandomAccess;
+import java.util.stream.Collector;
 import javax.annotation.CheckForNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
 
@@ -60,6 +62,19 @@ import org.checkerframework.checker.nullness.qual.Nullable;
 @ElementTypesAreNonnullByDefault
 public abstract class ImmutableList<E> extends ImmutableCollection<E>
     implements List<E>, RandomAccess {
+
+  /**
+   * Returns a {@code Collector} that accumulates the input elements into a new {@code
+   * ImmutableList}, in encounter order.
+   *
+   * @since 33.2.0 (available since 21.0 in guava-jre)
+   */
+  @SuppressWarnings({"AndroidJdkLibsChecker", "Java7ApiChecker"})
+  @IgnoreJRERequirement // Users will use this only if they're already using streams.
+  public static <E> Collector<E, ?, ImmutableList<E>> toImmutableList() {
+    return CollectCollectors.toImmutableList();
+  }
+
   /**
    * Returns the empty immutable list. This list behaves and performs comparably to {@link
    * Collections#emptyList}, and is preferable mainly for consistency and maintainability of your
@@ -78,10 +93,10 @@ public abstract class ImmutableList<E> extends ImmutableCollection<E>
    * comparably to {@link Collections#singletonList}, but will not accept a null element. It is
    * preferable mainly for consistency and maintainability of your code.
    *
-   * @throws NullPointerException if {@code element} is null
+   * @throws NullPointerException if the element is null
    */
-  public static <E> ImmutableList<E> of(E element) {
-    return construct(element);
+  public static <E> ImmutableList<E> of(E e1) {
+    return construct(e1);
   }
 
   /**
@@ -232,8 +247,8 @@ public abstract class ImmutableList<E> extends ImmutableCollection<E>
    *
    * <p>Note that if {@code list} is a {@code List<String>}, then {@code ImmutableList.copyOf(list)}
    * returns an {@code ImmutableList<String>} containing each of the strings in {@code list}, while
-   * ImmutableList.of(list)} returns an {@code ImmutableList<List<String>>} containing one element
-   * (the given list itself).
+   * {@code ImmutableList.of(list)} returns an {@code ImmutableList<List<String>>} containing one
+   * element (the given list itself).
    *
    * <p>This method is safe to use even when {@code elements} is a synchronized or concurrent
    * collection that is currently being modified by another thread.
@@ -288,7 +303,7 @@ public abstract class ImmutableList<E> extends ImmutableCollection<E>
    * ImmutableSortedSet.copyOf(elements)}; if you want a {@code List} you can use its {@code
    * asList()} view.
    *
-   * <p><b>Java 8 users:</b> If you want to convert a {@link java.util.stream.Stream} to a sorted
+   * <p><b>Java 8+ users:</b> If you want to convert a {@link java.util.stream.Stream} to a sorted
    * {@code ImmutableList}, use {@code stream.sorted().collect(toImmutableList())}.
    *
    * @throws NullPointerException if any element in the input is null
@@ -311,7 +326,7 @@ public abstract class ImmutableList<E> extends ImmutableCollection<E>
    * ImmutableSortedSet.copyOf(comparator, elements)}; if you want a {@code List} you can use its
    * {@code asList()} view.
    *
-   * <p><b>Java 8 users:</b> If you want to convert a {@link java.util.stream.Stream} to a sorted
+   * <p><b>Java 8+ users:</b> If you want to convert a {@link java.util.stream.Stream} to a sorted
    * {@code ImmutableList}, use {@code stream.sorted(comparator).collect(toImmutableList())}.
    *
    * @throws NullPointerException if any element in the input is null
@@ -413,6 +428,12 @@ public abstract class ImmutableList<E> extends ImmutableCollection<E>
    * Returns an immutable list of the elements between the specified {@code fromIndex}, inclusive,
    * and {@code toIndex}, exclusive. (If {@code fromIndex} and {@code toIndex} are equal, the empty
    * immutable list is returned.)
+   *
+   * <p><b>Note:</b> in almost all circumstances, the returned {@link ImmutableList} retains a
+   * strong reference to {@code this}, which may prevent the original list from being garbage
+   * collected. If you want the original list to be eligible for garbage collection, you should
+   * create and use a copy of the sub list (e.g., {@code
+   * ImmutableList.copyOf(originalList.subList(...))}).
    */
   @Override
   public ImmutableList<E> subList(int fromIndex, int toIndex) {
@@ -481,6 +502,15 @@ public abstract class ImmutableList<E> extends ImmutableCollection<E>
     @Override
     boolean isPartialView() {
       return true;
+    }
+
+    // redeclare to help optimizers with b/310253115
+    @SuppressWarnings("RedundantOverride")
+    @Override
+    @J2ktIncompatible // serialization
+    @GwtIncompatible // serialization
+    Object writeReplace() {
+      return super.writeReplace();
     }
   }
 
@@ -631,6 +661,15 @@ public abstract class ImmutableList<E> extends ImmutableCollection<E>
     boolean isPartialView() {
       return forwardList.isPartialView();
     }
+
+    // redeclare to help optimizers with b/310253115
+    @SuppressWarnings("RedundantOverride")
+    @Override
+    @J2ktIncompatible // serialization
+    @GwtIncompatible // serialization
+    Object writeReplace() {
+      return super.writeReplace();
+    }
   }
 
   @Override
@@ -655,6 +694,7 @@ public abstract class ImmutableList<E> extends ImmutableCollection<E>
    * Serializes ImmutableLists as their logical contents. This ensures that
    * implementation types do not leak into the serialized representation.
    */
+  @J2ktIncompatible // serialization
   static class SerializedForm implements Serializable {
     final Object[] elements;
 
@@ -669,11 +709,14 @@ public abstract class ImmutableList<E> extends ImmutableCollection<E>
     private static final long serialVersionUID = 0;
   }
 
+  @J2ktIncompatible // serialization
   private void readObject(ObjectInputStream stream) throws InvalidObjectException {
     throw new InvalidObjectException("Use SerializedForm");
   }
 
   @Override
+  @J2ktIncompatible // serialization
+  @GwtIncompatible // serialization
   Object writeReplace() {
     return new SerializedForm(toArray());
   }
@@ -683,7 +726,7 @@ public abstract class ImmutableList<E> extends ImmutableCollection<E>
    * Builder} constructor.
    */
   public static <E> Builder<E> builder() {
-    return new Builder<E>();
+    return new Builder<>();
   }
 
   /**
@@ -698,10 +741,9 @@ public abstract class ImmutableList<E> extends ImmutableCollection<E>
    *
    * @since 23.1
    */
-  @Beta
   public static <E> Builder<E> builderWithExpectedSize(int expectedSize) {
     checkNonnegative(expectedSize, "expectedSize");
-    return new ImmutableList.Builder<E>(expectedSize);
+    return new ImmutableList.Builder<>(expectedSize);
   }
 
   /**
@@ -807,5 +849,22 @@ public abstract class ImmutableList<E> extends ImmutableCollection<E>
       forceCopy = true;
       return asImmutableList(contents, size);
     }
+
+    /**
+     * Returns a newly-created {@code ImmutableList} based on the contents of the {@code Builder},
+     * sorted according to the specified comparator.
+     */
+    @SuppressWarnings("unchecked")
+    ImmutableList<E> buildSorted(Comparator<? super E> comparator) {
+      // Currently only used by ImmutableListMultimap.Builder.orderValuesBy.
+      // In particular, this implies that the comparator can never get "removed," so this can't
+      // invalidate future builds.
+
+      forceCopy = true;
+      Arrays.sort((E[]) contents, 0, size, comparator);
+      return asImmutableList(contents, size);
+    }
   }
+
+  private static final long serialVersionUID = 0xcafebabe;
 }

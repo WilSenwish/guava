@@ -17,10 +17,11 @@
 package com.google.common.collect;
 
 import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.Objects.requireNonNull;
 
-import com.google.common.annotations.Beta;
 import com.google.common.annotations.GwtCompatible;
 import com.google.common.annotations.GwtIncompatible;
+import com.google.common.annotations.J2ktIncompatible;
 import com.google.common.base.MoreObjects;
 import com.google.errorprone.annotations.CanIgnoreReturnValue;
 import com.google.errorprone.annotations.DoNotCall;
@@ -36,7 +37,11 @@ import java.util.Collection;
 import java.util.Comparator;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.function.Function;
+import java.util.stream.Collector;
+import java.util.stream.Stream;
 import javax.annotation.CheckForNull;
+import org.checkerframework.checker.nullness.qual.Nullable;
 
 /**
  * A {@link SetMultimap} whose contents will never change, with many other important properties
@@ -56,6 +61,91 @@ import javax.annotation.CheckForNull;
 @ElementTypesAreNonnullByDefault
 public class ImmutableSetMultimap<K, V> extends ImmutableMultimap<K, V>
     implements SetMultimap<K, V> {
+  /**
+   * Returns a {@link Collector} that accumulates elements into an {@code ImmutableSetMultimap}
+   * whose keys and values are the result of applying the provided mapping functions to the input
+   * elements.
+   *
+   * <p>For streams with defined encounter order (as defined in the Ordering section of the {@link
+   * java.util.stream} Javadoc), that order is preserved, but entries are <a
+   * href="ImmutableMultimap.html#iteration">grouped by key</a>.
+   *
+   * <p>Example:
+   *
+   * <pre>{@code
+   * static final Multimap<Character, String> FIRST_LETTER_MULTIMAP =
+   *     Stream.of("banana", "apple", "carrot", "asparagus", "cherry")
+   *         .collect(toImmutableSetMultimap(str -> str.charAt(0), str -> str.substring(1)));
+   *
+   * // is equivalent to
+   *
+   * static final Multimap<Character, String> FIRST_LETTER_MULTIMAP =
+   *     new ImmutableSetMultimap.Builder<Character, String>()
+   *         .put('b', "anana")
+   *         .putAll('a', "pple", "sparagus")
+   *         .putAll('c', "arrot", "herry")
+   *         .build();
+   * }</pre>
+   *
+   * @since 33.2.0 (available since 21.0 in guava-jre)
+   */
+  @SuppressWarnings({"AndroidJdkLibsChecker", "Java7ApiChecker"})
+  @IgnoreJRERequirement // Users will use this only if they're already using streams.
+  public static <T extends @Nullable Object, K, V>
+      Collector<T, ?, ImmutableSetMultimap<K, V>> toImmutableSetMultimap(
+          Function<? super T, ? extends K> keyFunction,
+          Function<? super T, ? extends V> valueFunction) {
+    return CollectCollectors.toImmutableSetMultimap(keyFunction, valueFunction);
+  }
+
+  /**
+   * Returns a {@code Collector} accumulating entries into an {@code ImmutableSetMultimap}. Each
+   * input element is mapped to a key and a stream of values, each of which are put into the
+   * resulting {@code Multimap}, in the encounter order of the stream and the encounter order of the
+   * streams of values.
+   *
+   * <p>Example:
+   *
+   * <pre>{@code
+   * static final ImmutableSetMultimap<Character, Character> FIRST_LETTER_MULTIMAP =
+   *     Stream.of("banana", "apple", "carrot", "asparagus", "cherry")
+   *         .collect(
+   *             flatteningToImmutableSetMultimap(
+   *                  str -> str.charAt(0),
+   *                  str -> str.substring(1).chars().mapToObj(c -> (char) c));
+   *
+   * // is equivalent to
+   *
+   * static final ImmutableSetMultimap<Character, Character> FIRST_LETTER_MULTIMAP =
+   *     ImmutableSetMultimap.<Character, Character>builder()
+   *         .putAll('b', Arrays.asList('a', 'n', 'a', 'n', 'a'))
+   *         .putAll('a', Arrays.asList('p', 'p', 'l', 'e'))
+   *         .putAll('c', Arrays.asList('a', 'r', 'r', 'o', 't'))
+   *         .putAll('a', Arrays.asList('s', 'p', 'a', 'r', 'a', 'g', 'u', 's'))
+   *         .putAll('c', Arrays.asList('h', 'e', 'r', 'r', 'y'))
+   *         .build();
+   *
+   * // after deduplication, the resulting multimap is equivalent to
+   *
+   * static final ImmutableSetMultimap<Character, Character> FIRST_LETTER_MULTIMAP =
+   *     ImmutableSetMultimap.<Character, Character>builder()
+   *         .putAll('b', Arrays.asList('a', 'n'))
+   *         .putAll('a', Arrays.asList('p', 'l', 'e', 's', 'a', 'r', 'g', 'u'))
+   *         .putAll('c', Arrays.asList('a', 'r', 'o', 't', 'h', 'e', 'y'))
+   *         .build();
+   * }
+   * }</pre>
+   *
+   * @since 33.2.0 (available since 21.0 in guava-jre)
+   */
+  @SuppressWarnings({"AndroidJdkLibsChecker", "Java7ApiChecker"})
+  @IgnoreJRERequirement // Users will use this only if they're already using streams.
+  public static <T extends @Nullable Object, K, V>
+      Collector<T, ?, ImmutableSetMultimap<K, V>> flatteningToImmutableSetMultimap(
+          Function<? super T, ? extends K> keyFunction,
+          Function<? super T, ? extends Stream<? extends V>> valuesFunction) {
+    return CollectCollectors.flatteningToImmutableSetMultimap(keyFunction, valuesFunction);
+  }
 
   /**
    * Returns the empty multimap.
@@ -163,8 +253,10 @@ public class ImmutableSetMultimap<K, V> extends ImmutableMultimap<K, V>
     }
 
     @Override
-    Collection<V> newMutableValueCollection() {
-      return Platform.preservesInsertionOrderOnAddsSet();
+    ImmutableCollection.Builder<V> newValueCollectionBuilder() {
+      return (valueComparator == null)
+          ? ImmutableSet.builder()
+          : new ImmutableSortedSet.Builder<V>(valueComparator);
     }
 
     /** Adds a key-value mapping to the built multimap if it is not already present. */
@@ -193,7 +285,6 @@ public class ImmutableSetMultimap<K, V> extends ImmutableMultimap<K, V>
      * @since 19.0
      */
     @CanIgnoreReturnValue
-    @Beta
     @Override
     public Builder<K, V> putAll(Iterable<? extends Entry<? extends K, ? extends V>> entries) {
       super.putAll(entries);
@@ -263,11 +354,14 @@ public class ImmutableSetMultimap<K, V> extends ImmutableMultimap<K, V>
     /** Returns a newly-created immutable set multimap. */
     @Override
     public ImmutableSetMultimap<K, V> build() {
-      Collection<Map.Entry<K, Collection<V>>> mapEntries = builderMap.entrySet();
+      if (builderMap == null) {
+        return ImmutableSetMultimap.of();
+      }
+      Collection<Map.Entry<K, ImmutableCollection.Builder<V>>> mapEntries = builderMap.entrySet();
       if (keyComparator != null) {
         mapEntries = Ordering.from(keyComparator).<K>onKeys().immutableSortedCopy(mapEntries);
       }
-      return fromMapEntries(mapEntries, valueComparator);
+      return fromMapBuilderEntries(mapEntries, valueComparator);
     }
   }
 
@@ -316,7 +410,6 @@ public class ImmutableSetMultimap<K, V> extends ImmutableMultimap<K, V>
    * @throws NullPointerException if any key, value, or entry is null
    * @since 19.0
    */
-  @Beta
   public static <K, V> ImmutableSetMultimap<K, V> copyOf(
       Iterable<? extends Entry<? extends K, ? extends V>> entries) {
     return new Builder<K, V>().putAll(entries).build();
@@ -337,6 +430,32 @@ public class ImmutableSetMultimap<K, V> extends ImmutableMultimap<K, V>
       K key = entry.getKey();
       Collection<? extends V> values = entry.getValue();
       ImmutableSet<V> set = valueSet(valueComparator, values);
+      if (!set.isEmpty()) {
+        builder.put(key, set);
+        size += set.size();
+      }
+    }
+
+    return new ImmutableSetMultimap<>(builder.buildOrThrow(), size, valueComparator);
+  }
+
+  /** Creates an ImmutableSetMultimap from a map to builders. */
+  static <K, V> ImmutableSetMultimap<K, V> fromMapBuilderEntries(
+      Collection<? extends Map.Entry<K, ImmutableCollection.Builder<V>>> mapEntries,
+      @CheckForNull Comparator<? super V> valueComparator) {
+    if (mapEntries.isEmpty()) {
+      return of();
+    }
+    ImmutableMap.Builder<K, ImmutableSet<V>> builder =
+        new ImmutableMap.Builder<>(mapEntries.size());
+    int size = 0;
+
+    for (Entry<K, ImmutableCollection.Builder<V>> entry : mapEntries) {
+      K key = entry.getKey();
+      ImmutableSet.Builder<? extends V> values = (ImmutableSet.Builder<V>) entry.getValue();
+      // If orderValuesBy got called at the very end, we may need to do the ImmutableSet to
+      // ImmutableSortedSet copy for each of these.
+      ImmutableSet<V> set = valueSet(valueComparator, values.build());
       if (!set.isEmpty()) {
         builder.put(key, set);
         size += set.size();
@@ -469,6 +588,15 @@ public class ImmutableSetMultimap<K, V> extends ImmutableMultimap<K, V>
     boolean isPartialView() {
       return false;
     }
+
+    // redeclare to help optimizers with b/310253115
+    @SuppressWarnings("RedundantOverride")
+    @Override
+    @J2ktIncompatible // serialization
+    @GwtIncompatible // serialization
+    Object writeReplace() {
+      return super.writeReplace();
+    }
   }
 
   private static <V> ImmutableSet<V> valueSet(
@@ -496,6 +624,7 @@ public class ImmutableSetMultimap<K, V> extends ImmutableMultimap<K, V>
    *     values for that key, and the key's values
    */
   @GwtIncompatible // java.io.ObjectOutputStream
+  @J2ktIncompatible
   private void writeObject(ObjectOutputStream stream) throws IOException {
     stream.defaultWriteObject();
     stream.writeObject(valueComparator());
@@ -510,12 +639,15 @@ public class ImmutableSetMultimap<K, V> extends ImmutableMultimap<K, V>
   }
 
   @GwtIncompatible // java serialization
+  @J2ktIncompatible
   private static final class SetFieldSettersHolder {
-    static final Serialization.FieldSetter<ImmutableSetMultimap> EMPTY_SET_FIELD_SETTER =
-        Serialization.getFieldSetter(ImmutableSetMultimap.class, "emptySet");
+    static final Serialization.FieldSetter<? super ImmutableSetMultimap<?, ?>>
+        EMPTY_SET_FIELD_SETTER =
+            Serialization.getFieldSetter(ImmutableSetMultimap.class, "emptySet");
   }
 
   @GwtIncompatible // java.io.ObjectInputStream
+  @J2ktIncompatible
   // Serialization type safety is at the caller's mercy.
   @SuppressWarnings("unchecked")
   private void readObject(ObjectInputStream stream) throws IOException, ClassNotFoundException {
@@ -529,7 +661,7 @@ public class ImmutableSetMultimap<K, V> extends ImmutableMultimap<K, V>
     int tmpSize = 0;
 
     for (int i = 0; i < keyCount; i++) {
-      Object key = stream.readObject();
+      Object key = requireNonNull(stream.readObject());
       int valueCount = stream.readInt();
       if (valueCount <= 0) {
         throw new InvalidObjectException("Invalid value count " + valueCount);
@@ -537,7 +669,7 @@ public class ImmutableSetMultimap<K, V> extends ImmutableMultimap<K, V>
 
       ImmutableSet.Builder<Object> valuesBuilder = valuesBuilder(valueComparator);
       for (int j = 0; j < valueCount; j++) {
-        valuesBuilder.add(stream.readObject());
+        valuesBuilder.add(requireNonNull(stream.readObject()));
       }
       ImmutableSet<Object> valueSet = valuesBuilder.build();
       if (valueSet.size() != valueCount) {
@@ -560,5 +692,6 @@ public class ImmutableSetMultimap<K, V> extends ImmutableMultimap<K, V>
   }
 
   @GwtIncompatible // not needed in emulated source.
+  @J2ktIncompatible
   private static final long serialVersionUID = 0;
 }

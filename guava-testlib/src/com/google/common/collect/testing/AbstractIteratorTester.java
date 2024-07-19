@@ -30,7 +30,7 @@ import java.util.ListIterator;
 import java.util.NoSuchElementException;
 import java.util.Set;
 import java.util.Stack;
-import junit.framework.AssertionFailedError;
+import org.checkerframework.checker.nullness.qual.Nullable;
 
 /**
  * Most of the logic for {@link IteratorTester} and {@link ListIteratorTester}.
@@ -41,7 +41,8 @@ import junit.framework.AssertionFailedError;
  * @author Chris Povirk
  */
 @GwtCompatible
-abstract class AbstractIteratorTester<E, I extends Iterator<E>> {
+@ElementTypesAreNonnullByDefault
+abstract class AbstractIteratorTester<E extends @Nullable Object, I extends Iterator<E>> {
   private Stimulus<E, ? super I>[] stimuli;
   private final Iterator<E> elementsToInsert;
   private final Set<IteratorFeature> features;
@@ -57,7 +58,7 @@ abstract class AbstractIteratorTester<E, I extends Iterator<E>> {
     static final PermittedMetaException UOE_OR_ISE =
         new PermittedMetaException("UnsupportedOperationException or IllegalStateException") {
           @Override
-          boolean isPermitted(RuntimeException exception) {
+          boolean isPermitted(Exception exception) {
             return exception instanceof UnsupportedOperationException
                 || exception instanceof IllegalStateException;
           }
@@ -65,21 +66,21 @@ abstract class AbstractIteratorTester<E, I extends Iterator<E>> {
     static final PermittedMetaException UOE =
         new PermittedMetaException("UnsupportedOperationException") {
           @Override
-          boolean isPermitted(RuntimeException exception) {
+          boolean isPermitted(Exception exception) {
             return exception instanceof UnsupportedOperationException;
           }
         };
     static final PermittedMetaException ISE =
         new PermittedMetaException("IllegalStateException") {
           @Override
-          boolean isPermitted(RuntimeException exception) {
+          boolean isPermitted(Exception exception) {
             return exception instanceof IllegalStateException;
           }
         };
     static final PermittedMetaException NSEE =
         new PermittedMetaException("NoSuchElementException") {
           @Override
-          boolean isPermitted(RuntimeException exception) {
+          boolean isPermitted(Exception exception) {
             return exception instanceof NoSuchElementException;
           }
         };
@@ -88,16 +89,16 @@ abstract class AbstractIteratorTester<E, I extends Iterator<E>> {
       super(message);
     }
 
-    abstract boolean isPermitted(RuntimeException exception);
+    abstract boolean isPermitted(Exception exception);
 
-    void assertPermitted(RuntimeException exception) {
+    void assertPermitted(Exception exception) {
       if (!isPermitted(exception)) {
         String message =
             "Exception "
                 + exception.getClass().getSimpleName()
                 + " was thrown; expected "
                 + getMessage();
-        Helpers.fail(exception, message);
+        throw new AssertionError(message, exception);
       }
     }
 
@@ -135,20 +136,22 @@ abstract class AbstractIteratorTester<E, I extends Iterator<E>> {
      * The elements to be returned by future calls to {@code next()}, with the first at the top of
      * the stack.
      */
-    final Stack<E> nextElements = new Stack<E>();
+    final Stack<E> nextElements = new Stack<>();
+
     /**
      * The elements to be returned by future calls to {@code previous()}, with the first at the top
      * of the stack.
      */
-    final Stack<E> previousElements = new Stack<E>();
+    final Stack<E> previousElements = new Stack<>();
+
     /**
      * {@link #nextElements} if {@code next()} was called more recently then {@code previous},
      * {@link #previousElements} if the reverse is true, or -- overriding both of these -- {@code
      * null} if {@code remove()} or {@code add()} has been called more recently than either. We use
      * this to determine which stack to pop from on a call to {@code remove()} (or to pop from and
-     * push to on a call to {@code set()}.
+     * push to on a call to {@code set()}).
      */
-    Stack<E> stackWithLastReturnedElementAtTop = null;
+    @Nullable Stack<E> stackWithLastReturnedElementAtTop = null;
 
     MultiExceptionListIterator(List<E> expectedElements) {
       Helpers.addAll(nextElements, Helpers.reverse(expectedElements));
@@ -254,7 +257,7 @@ abstract class AbstractIteratorTester<E, I extends Iterator<E>> {
     }
 
     private List<E> getElements() {
-      List<E> elements = new ArrayList<E>();
+      List<E> elements = new ArrayList<>();
       Helpers.addAll(elements, previousElements);
       Helpers.addAll(elements, Helpers.reverse(nextElements));
       return elements;
@@ -266,7 +269,7 @@ abstract class AbstractIteratorTester<E, I extends Iterator<E>> {
     UNKNOWN_ORDER
   }
 
-  @SuppressWarnings("unchecked") // creating array of generic class Stimulus
+  @SuppressWarnings("unchecked") // TODO(cpovirk): Stop using arrays.
   AbstractIteratorTester(
       int steps,
       Iterable<E> elementsToInsertIterable,
@@ -276,7 +279,7 @@ abstract class AbstractIteratorTester<E, I extends Iterator<E>> {
       int startIndex) {
     // periodically we should manually try (steps * 3 / 2) here; all tests but
     // one should still pass (testVerifyGetsCalled()).
-    stimuli = new Stimulus[steps];
+    stimuli = (Stimulus<E, ? super I>[]) new Stimulus<?, ?>[steps];
     if (!elementsToInsertIterable.iterator().hasNext()) {
       throw new IllegalArgumentException();
     }
@@ -312,17 +315,18 @@ abstract class AbstractIteratorTester<E, I extends Iterator<E>> {
   protected void verify(List<E> elements) {}
 
   /** Executes the test. */
+  @SuppressWarnings("CatchingUnchecked") // sneaky checked exception
   public final void test() {
     try {
       recurse(0);
-    } catch (RuntimeException e) {
+    } catch (Exception e) { // sneaky checked exception
       throw new RuntimeException(Arrays.toString(stimuli), e);
     }
   }
 
   public void testForEachRemaining() {
     for (int i = 0; i < expectedElements.size() - 1; i++) {
-      List<E> targetElements = new ArrayList<E>();
+      List<E> targetElements = new ArrayList<>();
       Iterator<E> iterator = newTargetIterator();
       for (int j = 0; j < i; j++) {
         targetElements.add(iterator.next());
@@ -366,8 +370,8 @@ abstract class AbstractIteratorTester<E, I extends Iterator<E>> {
       try {
         stimuli[i].executeAndCompare(reference, target);
         verify(reference.getElements());
-      } catch (AssertionFailedError cause) {
-        Helpers.fail(cause, "failed with stimuli " + subListCopy(stimuli, i + 1));
+      } catch (AssertionError cause) {
+        throw new AssertionError("failed with stimuli " + subListCopy(stimuli, i + 1), cause);
       }
     }
   }
@@ -379,7 +383,7 @@ abstract class AbstractIteratorTester<E, I extends Iterator<E>> {
   }
 
   private interface IteratorOperation {
-    Object execute(Iterator<?> iterator);
+    @Nullable Object execute(Iterator<?> iterator);
   }
 
   /**
@@ -387,16 +391,17 @@ abstract class AbstractIteratorTester<E, I extends Iterator<E>> {
    *
    * @see Stimulus#executeAndCompare(ListIterator, Iterator)
    */
+  @SuppressWarnings("CatchingUnchecked") // sneaky checked exception
   private <T extends Iterator<E>> void internalExecuteAndCompare(
       T reference, T target, IteratorOperation method) {
     Object referenceReturnValue = null;
     PermittedMetaException referenceException = null;
     Object targetReturnValue = null;
-    RuntimeException targetException = null;
+    Exception targetException = null;
 
     try {
       targetReturnValue = method.execute(target);
-    } catch (RuntimeException e) {
+    } catch (Exception e) { // sneaky checked exception
       targetException = e;
     }
 
@@ -425,6 +430,7 @@ abstract class AbstractIteratorTester<E, I extends Iterator<E>> {
          * doesn't recognize this kind of cast as unchecked cast. Neither does
          * Eclipse 3.4. Right now, this suppression is mostly unnecessary.
          */
+        @SuppressWarnings("unchecked")
         MultiExceptionListIterator multiExceptionListIterator =
             (MultiExceptionListIterator) reference;
         multiExceptionListIterator.promoteToNext(targetReturnValueFromNext);
@@ -434,12 +440,12 @@ abstract class AbstractIteratorTester<E, I extends Iterator<E>> {
     } catch (PermittedMetaException e) {
       referenceException = e;
     } catch (UnknownElementException e) {
-      Helpers.fail(e, e.getMessage());
+      throw new AssertionError(e);
     }
 
     if (referenceException == null) {
       if (targetException != null) {
-        Helpers.fail(targetException, "Target threw exception when reference did not");
+        throw new AssertionError("Target threw exception when reference did not", targetException);
       }
 
       /*
@@ -465,7 +471,7 @@ abstract class AbstractIteratorTester<E, I extends Iterator<E>> {
   private static final IteratorOperation REMOVE_METHOD =
       new IteratorOperation() {
         @Override
-        public Object execute(Iterator<?> iterator) {
+        public @Nullable Object execute(Iterator<?> iterator) {
           iterator.remove();
           return null;
         }
@@ -474,7 +480,7 @@ abstract class AbstractIteratorTester<E, I extends Iterator<E>> {
   private static final IteratorOperation NEXT_METHOD =
       new IteratorOperation() {
         @Override
-        public Object execute(Iterator<?> iterator) {
+        public @Nullable Object execute(Iterator<?> iterator) {
           return iterator.next();
         }
       };
@@ -482,7 +488,7 @@ abstract class AbstractIteratorTester<E, I extends Iterator<E>> {
   private static final IteratorOperation PREVIOUS_METHOD =
       new IteratorOperation() {
         @Override
-        public Object execute(Iterator<?> iterator) {
+        public @Nullable Object execute(Iterator<?> iterator) {
           return ((ListIterator<?>) iterator).previous();
         }
       };
@@ -491,7 +497,7 @@ abstract class AbstractIteratorTester<E, I extends Iterator<E>> {
     final Object toInsert = elementsToInsert.next();
     return new IteratorOperation() {
       @Override
-      public Object execute(Iterator<?> iterator) {
+      public @Nullable Object execute(Iterator<?> iterator) {
         @SuppressWarnings("unchecked")
         ListIterator<Object> rawIterator = (ListIterator<Object>) iterator;
         rawIterator.add(toInsert);
@@ -504,7 +510,7 @@ abstract class AbstractIteratorTester<E, I extends Iterator<E>> {
     final E toInsert = elementsToInsert.next();
     return new IteratorOperation() {
       @Override
-      public Object execute(Iterator<?> iterator) {
+      public @Nullable Object execute(Iterator<?> iterator) {
         @SuppressWarnings("unchecked")
         ListIterator<E> li = (ListIterator<E>) iterator;
         li.set(toInsert);
@@ -513,7 +519,7 @@ abstract class AbstractIteratorTester<E, I extends Iterator<E>> {
     };
   }
 
-  abstract static class Stimulus<E, T extends Iterator<E>> {
+  abstract static class Stimulus<E extends @Nullable Object, T extends Iterator<E>> {
     private final String toString;
 
     protected Stimulus(String toString) {
@@ -554,7 +560,6 @@ abstract class AbstractIteratorTester<E, I extends Iterator<E>> {
         }
       };
 
-  @SuppressWarnings("unchecked")
   List<Stimulus<E, Iterator<E>>> iteratorStimuli() {
     return Arrays.asList(hasNext, next, remove);
   }
@@ -602,7 +607,6 @@ abstract class AbstractIteratorTester<E, I extends Iterator<E>> {
         }
       };
 
-  @SuppressWarnings("unchecked")
   List<Stimulus<E, ListIterator<E>>> listIteratorStimuli() {
     return Arrays.asList(hasPrevious, nextIndex, previousIndex, previous, add, set);
   }

@@ -35,6 +35,7 @@ import java.util.concurrent.FutureTask;
 import java.util.concurrent.TimeUnit;
 import junit.framework.TestCase;
 import junit.framework.TestSuite;
+import org.checkerframework.checker.nullness.qual.Nullable;
 
 /**
  * Generated tests for {@link Monitor}.
@@ -460,7 +461,11 @@ public class GeneratedMonitorTest extends TestCase {
   private final CountDownLatch callCompletedLatch;
 
   private GeneratedMonitorTest(
-      Method method, Scenario scenario, boolean fair, Timeout timeout, Outcome expectedOutcome) {
+      Method method,
+      Scenario scenario,
+      boolean fair,
+      @Nullable Timeout timeout,
+      Outcome expectedOutcome) {
     super(nameFor(method, scenario, fair, timeout, expectedOutcome));
     this.method = method;
     this.scenario = scenario;
@@ -494,7 +499,7 @@ public class GeneratedMonitorTest extends TestCase {
             runChosenTest();
           }
         };
-    final FutureTask<Void> task = new FutureTask<>(runChosenTest, null);
+    final FutureTask<@Nullable Void> task = new FutureTask<>(runChosenTest, null);
     startThread(
         new Runnable() {
           @Override
@@ -674,10 +679,10 @@ public class GeneratedMonitorTest extends TestCase {
       if (actualException instanceof InterruptedException) {
         return Outcome.INTERRUPT;
       } else {
-        throw newAssertionError("unexpected exception", targetException);
+        throw new AssertionError("unexpected exception", targetException);
       }
     } catch (IllegalAccessException e) {
-      throw newAssertionError("unexpected exception", e);
+      throw new AssertionError("unexpected exception", e);
     }
   }
 
@@ -806,12 +811,5 @@ public class GeneratedMonitorTest extends TestCase {
         }
       }
     };
-  }
-
-  /** Alternative to AssertionError(String, Throwable), which doesn't exist in Java 1.6 */
-  private static AssertionError newAssertionError(String message, Throwable cause) {
-    AssertionError e = new AssertionError(message);
-    e.initCause(cause);
-    return e;
   }
 }

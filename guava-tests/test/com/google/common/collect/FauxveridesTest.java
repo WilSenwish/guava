@@ -21,6 +21,7 @@ import static com.google.common.collect.Sets.difference;
 import static com.google.common.collect.Sets.newHashSet;
 import static java.lang.reflect.Modifier.isPublic;
 import static java.lang.reflect.Modifier.isStatic;
+import static org.junit.Assert.assertThrows;
 
 import com.google.common.base.Function;
 import com.google.common.base.Joiner;
@@ -34,6 +35,7 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import junit.framework.TestCase;
+import org.checkerframework.checker.nullness.qual.Nullable;
 
 /**
  * Tests that all {@code public static} methods "inherited" from superclasses are "overridden" in
@@ -77,31 +79,19 @@ public class FauxveridesTest extends TestCase {
     Map<Object, Object> original =
         ImmutableMap.of(new Object(), new Object(), new Object(), new Object());
 
-    try {
-      ImmutableSortedMap.copyOf(original);
-      fail();
-    } catch (ClassCastException expected) {
-    }
+    assertThrows(ClassCastException.class, () -> ImmutableSortedMap.copyOf(original));
   }
 
   public void testImmutableSortedSetCopyOfIterable() {
     Set<Object> original = ImmutableSet.of(new Object(), new Object());
 
-    try {
-      ImmutableSortedSet.copyOf(original);
-      fail();
-    } catch (ClassCastException expected) {
-    }
+    assertThrows(ClassCastException.class, () -> ImmutableSortedSet.copyOf(original));
   }
 
   public void testImmutableSortedSetCopyOfIterator() {
     Set<Object> original = ImmutableSet.of(new Object(), new Object());
 
-    try {
-      ImmutableSortedSet.copyOf(original.iterator());
-      fail();
-    } catch (ClassCastException expected) {
-    }
+    assertThrows(ClassCastException.class, () -> ImmutableSortedSet.copyOf(original.iterator()));
   }
 
   private void doHasAllFauxveridesTest(Class<?> descendant, Class<?> ancestor) {
@@ -176,7 +166,7 @@ public class FauxveridesTest extends TestCase {
     }
 
     @Override
-    public boolean equals(Object obj) {
+    public boolean equals(@Nullable Object obj) {
       if (obj instanceof MethodSignature) {
         MethodSignature other = (MethodSignature) obj;
         return name.equals(other.name)
@@ -219,7 +209,7 @@ public class FauxveridesTest extends TestCase {
     }
 
     @Override
-    public boolean equals(Object obj) {
+    public boolean equals(@Nullable Object obj) {
       if (obj instanceof TypeSignature) {
         TypeSignature other = (TypeSignature) obj;
         return parameterSignatures.equals(other.parameterSignatures);
@@ -251,7 +241,7 @@ public class FauxveridesTest extends TestCase {
     }
 
     @Override
-    public boolean equals(Object obj) {
+    public boolean equals(@Nullable Object obj) {
       if (obj instanceof TypeParameterSignature) {
         TypeParameterSignature other = (TypeParameterSignature) obj;
         /*

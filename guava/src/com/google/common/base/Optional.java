@@ -16,7 +16,6 @@ package com.google.common.base;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
-import com.google.common.annotations.Beta;
 import com.google.common.annotations.GwtCompatible;
 import com.google.errorprone.annotations.DoNotMock;
 import java.io.Serializable;
@@ -51,6 +50,9 @@ import javax.annotation.CheckForNull;
  *
  * <p>This class is not intended as a direct analogue of any existing "option" or "maybe" construct
  * from other programming environments, though it may bear some similarities.
+ *
+ * <p>An instance of this class is serializable if its reference is absent or is a serializable
+ * object.
  *
  * <p><b>Comparison to {@code java.util.Optional} (JDK 8 and higher):</b> A new {@code Optional}
  * class was added for Java 8. The two classes are extremely similar, but incompatible (they cannot
@@ -103,7 +105,7 @@ public abstract class Optional<T> implements Serializable {
    * @throws NullPointerException if {@code reference} is null
    */
   public static <T> Optional<T> of(T reference) {
-    return new Present<T>(checkNotNull(reference));
+    return new Present<>(checkNotNull(reference));
   }
 
   /**
@@ -173,7 +175,7 @@ public abstract class Optional<T> implements Serializable {
    * {@link #or(Object)} or {@link #orNull} instead.
    *
    * <p><b>Comparison to {@code java.util.Optional}:</b> when the value is absent, this method
-   * throws {@link IllegalStateException}, whereas the Java 8 counterpart throws {@link
+   * throws {@link IllegalStateException}, whereas the {@code java.util} counterpart throws {@link
    * java.util.NoSuchElementException NoSuchElementException}.
    *
    * @throws IllegalStateException if the instance is absent ({@link #isPresent} returns {@code
@@ -234,12 +236,11 @@ public abstract class Optional<T> implements Serializable {
    *
    * <p><b>Comparison to {@code java.util.Optional}:</b> this method is similar to Java 8's {@code
    * Optional.orElseGet}, except when {@code supplier} returns {@code null}. In this case this
-   * method throws an exception, whereas the Java 8 method returns the {@code null} to the caller.
+   * method throws an exception, whereas the Java 8+ method returns the {@code null} to the caller.
    *
    * @throws NullPointerException if this optional's value is absent and the supplier returns {@code
    *     null}
    */
-  @Beta
   public abstract T or(Supplier<? extends T> supplier);
 
   /**
@@ -283,7 +284,7 @@ public abstract class Optional<T> implements Serializable {
    *
    * <p><b>Comparison to {@code java.util.Optional}:</b> this method is similar to Java 8's {@code
    * Optional.map}, except when {@code function} returns {@code null}. In this case this method
-   * throws an exception, whereas the Java 8 method returns {@code Optional.absent()}.
+   * throws an exception, whereas the Java 8+ method returns {@code Optional.absent()}.
    *
    * @throws NullPointerException if the function returns {@code null}
    * @since 12.0
@@ -304,7 +305,7 @@ public abstract class Optional<T> implements Serializable {
    * Returns a hash code for this instance.
    *
    * <p><b>Comparison to {@code java.util.Optional}:</b> this class leaves the specific choice of
-   * hash code unspecified, unlike the Java 8 equivalent.
+   * hash code unspecified, unlike the Java 8+ equivalent.
    */
   @Override
   public abstract int hashCode();
@@ -313,7 +314,7 @@ public abstract class Optional<T> implements Serializable {
    * Returns a string representation for this instance.
    *
    * <p><b>Comparison to {@code java.util.Optional}:</b> this class leaves the specific string
-   * representation unspecified, unlike the Java 8 equivalent.
+   * representation unspecified, unlike the Java 8+ equivalent.
    */
   @Override
   public abstract String toString();
@@ -331,7 +332,6 @@ public abstract class Optional<T> implements Serializable {
    *
    * @since 11.0 (generics widened in 13.0)
    */
-  @Beta
   public static <T> Iterable<T> presentInstances(
       final Iterable<? extends Optional<? extends T>> optionals) {
     checkNotNull(optionals);

@@ -15,6 +15,7 @@
 package com.google.common.base;
 
 import com.google.common.annotations.GwtIncompatible;
+import com.google.common.annotations.J2ktIncompatible;
 import com.google.common.annotations.VisibleForTesting;
 import java.io.Closeable;
 import java.io.FileNotFoundException;
@@ -88,6 +89,7 @@ import javax.annotation.CheckForNull;
  * @author Bob Lee
  * @since 2.0
  */
+@J2ktIncompatible
 @GwtIncompatible
 @ElementTypesAreNonnullByDefault
 public class FinalizableReferenceQueue implements Closeable {
@@ -283,17 +285,16 @@ public class FinalizableReferenceQueue implements Closeable {
     @Override
     @CheckForNull
     public Class<?> loadFinalizer() {
-      try {
-        /*
-         * We use URLClassLoader because it's the only concrete class loader implementation in the
-         * JDK. If we used our own ClassLoader subclass, Finalizer would indirectly reference this
-         * class loader:
-         *
-         * Finalizer.class -> CustomClassLoader -> CustomClassLoader.class -> This class loader
-         *
-         * System class loader will (and must) be the parent.
-         */
-        ClassLoader finalizerLoader = newLoader(getBaseUrl());
+      /*
+       * We use URLClassLoader because it's the only concrete class loader implementation in the
+       * JDK. If we used our own ClassLoader subclass, Finalizer would indirectly reference this
+       * class loader:
+       *
+       * Finalizer.class -> CustomClassLoader -> CustomClassLoader.class -> This class loader
+       *
+       * System class loader will (and must) be the parent.
+       */
+      try (URLClassLoader finalizerLoader = newLoader(getBaseUrl())) {
         return finalizerLoader.loadClass(FINALIZER_CLASS_NAME);
       } catch (Exception e) {
         logger.log(Level.WARNING, LOADING_ERROR, e);

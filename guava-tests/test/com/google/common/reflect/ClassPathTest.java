@@ -17,6 +17,7 @@ package com.google.common.reflect;
 
 import static com.google.common.base.Charsets.US_ASCII;
 import static com.google.common.base.StandardSystemProperty.JAVA_CLASS_PATH;
+import static com.google.common.base.StandardSystemProperty.OS_NAME;
 import static com.google.common.base.StandardSystemProperty.PATH_SEPARATOR;
 import static com.google.common.io.MoreFiles.deleteRecursively;
 import static com.google.common.truth.Truth.assertThat;
@@ -46,6 +47,7 @@ import java.net.MalformedURLException;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.net.URLClassLoader;
+import java.nio.file.Path;
 import java.security.Permission;
 import java.security.PermissionCollection;
 import java.util.jar.Attributes;
@@ -202,6 +204,9 @@ public class ClassPathTest extends TestCase {
   @AndroidIncompatible // Path (for symlink creation)
 
   public void testScanDirectory_symlinkCycle() throws IOException {
+    if (isWindows()) {
+      return; // TODO: b/136041958 - Can we detect cycles under Windows?
+    }
     ClassLoader loader = ClassPathTest.class.getClassLoader();
     // directory with a cycle,
     // /root
@@ -209,12 +214,12 @@ public class ClassPathTest extends TestCase {
     //       /[sibling -> right]
     //    /right
     //       /[sibling -> left]
-    java.nio.file.Path root = createTempDirectory("ClassPathTest");
+    Path root = createTempDirectory("ClassPathTest");
     try {
-      java.nio.file.Path left = createDirectory(root.resolve("left"));
+      Path left = createDirectory(root.resolve("left"));
       createFile(left.resolve("some.txt"));
 
-      java.nio.file.Path right = createDirectory(root.resolve("right"));
+      Path right = createDirectory(root.resolve("right"));
       createFile(right.resolve("another.txt"));
 
       createSymbolicLink(left.resolve("sibling"), right);
@@ -234,15 +239,18 @@ public class ClassPathTest extends TestCase {
   @AndroidIncompatible // Path (for symlink creation)
 
   public void testScanDirectory_symlinkToRootCycle() throws IOException {
+    if (isWindows()) {
+      return; // TODO: b/136041958 - Can we detect cycles under Windows?
+    }
     ClassLoader loader = ClassPathTest.class.getClassLoader();
     // directory with a cycle,
     // /root
     //    /child
     //       /[grandchild -> root]
-    java.nio.file.Path root = createTempDirectory("ClassPathTest");
+    Path root = createTempDirectory("ClassPathTest");
     try {
       createFile(root.resolve("some.txt"));
-      java.nio.file.Path child = createDirectory(root.resolve("child"));
+      Path child = createDirectory(root.resolve("child"));
       createSymbolicLink(child.resolve("grandchild"), root);
       assertEquals(
           ImmutableSet.of(new ResourceInfo(FILE, "some.txt", loader)),
@@ -274,6 +282,9 @@ public class ClassPathTest extends TestCase {
   }
 
   public void testGetClassPathEntry() throws MalformedURLException, URISyntaxException {
+    if (isWindows()) {
+      return; // TODO: b/136041958 - We need to account for drive letters in the path.
+    }
     assertEquals(
         new File("/usr/test/dep.jar").toURI(),
         ClassPath.getClassPathEntry(new File("/home/build/outer.jar"), "file:/usr/test/dep.jar")
@@ -344,6 +355,9 @@ public class ClassPathTest extends TestCase {
   }
 
   public void testGetClassPathFromManifest_absoluteDirectory() throws IOException {
+    if (isWindows()) {
+      return; // TODO: b/136041958 - We need to account for drive letters in the path.
+    }
     File jarFile = new File("base/some.jar");
     Manifest manifest = manifestClasspath("file:/with/absolute/dir");
     assertThat(ClassPath.getClassPathFromManifest(jarFile, manifest))
@@ -351,6 +365,9 @@ public class ClassPathTest extends TestCase {
   }
 
   public void testGetClassPathFromManifest_absoluteJar() throws IOException {
+    if (isWindows()) {
+      return; // TODO: b/136041958 - We need to account for drive letters in the path.
+    }
     File jarFile = new File("base/some.jar");
     Manifest manifest = manifestClasspath("file:/with/absolute.jar");
     assertThat(ClassPath.getClassPathFromManifest(jarFile, manifest))
@@ -358,6 +375,9 @@ public class ClassPathTest extends TestCase {
   }
 
   public void testGetClassPathFromManifest_multiplePaths() throws IOException {
+    if (isWindows()) {
+      return; // TODO: b/136041958 - We need to account for drive letters in the path.
+    }
     File jarFile = new File("base/some.jar");
     Manifest manifest = manifestClasspath("file:/with/absolute.jar relative.jar  relative/dir");
     assertThat(ClassPath.getClassPathFromManifest(jarFile, manifest))
@@ -413,7 +433,11 @@ public class ClassPathTest extends TestCase {
   // Test that ResourceInfo.urls() returns identical content to ClassLoader.getResources()
 
 
+  @AndroidIncompatible
   public void testGetClassPathUrls() throws Exception {
+    if (isWindows()) {
+      return; // TODO: b/136041958 - We need to account for drive letters in the path.
+    }
     String oldPathSeparator = PATH_SEPARATOR.value();
     String oldClassPath = JAVA_CLASS_PATH.value();
     System.setProperty(PATH_SEPARATOR.key(), ":");
@@ -581,7 +605,7 @@ public class ClassPathTest extends TestCase {
     Closer closer = Closer.create();
     try {
       FileOutputStream fileOut = closer.register(new FileOutputStream(jarFile));
-      JarOutputStream jarOut = closer.register(new JarOutputStream(fileOut));
+      JarOutputStream jarOut = closer.register(new JarOutputStream(fileOut, manifest));
       for (String entry : entries) {
         jarOut.putNextEntry(new ZipEntry(entry));
         Resources.copy(ClassPathTest.class.getResource(entry), jarOut);
@@ -606,6 +630,10 @@ public class ClassPathTest extends TestCase {
   }
 
   private static URL makeJarUrlWithName(String name) throws IOException {
+    /*
+     * TODO: cpovirk - Use java.nio.file.Files.createTempDirectory instead of
+     * c.g.c.io.Files.createTempDir?
+     */
     File fullPath = new File(Files.createTempDir(), name);
     File jarFile = pickAnyJarFile();
     Files.copy(jarFile, fullPath);
@@ -623,7 +651,7 @@ public class ClassPathTest extends TestCase {
   }
 
   @AndroidIncompatible // Path (for symlink creation)
-  private static void deleteRecursivelyOrLog(java.nio.file.Path path) {
+  private static void deleteRecursivelyOrLog(Path path) {
     try {
       deleteRecursively(path);
     } catch (IOException e) {
@@ -639,5 +667,9 @@ public class ClassPathTest extends TestCase {
       }
     }
     return builder.build();
+  }
+
+  private static boolean isWindows() {
+    return OS_NAME.value().startsWith("Windows");
   }
 }
